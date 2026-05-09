@@ -33,9 +33,15 @@ t = np.arange(len(audio)) / fs
 # Clap Detection (Time-domain transient detection)
 # ============================================================
 
+lowcut = 1000
+highcut = 8000
+order = 4
+b,a = signal.butter(order, [lowcut,highcut], btype="bandpass", fs=fs)
+audio_filt = signal.filtfilt(b, a, audio)
+
 # Step 1: Rectify (absolute value)
 # This makes the signal always positive so averaging doesn't cancel it out.
-rectified = np.abs(audio)
+rectified = np.abs(audio_filt)
 
 # Step 2: Smooth using moving average (~10 ms)
 # This creates an amplitude envelope.
@@ -50,7 +56,7 @@ noise_floor = np.median(envelope)
 
 # Step 4: Threshold selection
 # Multiplier controls sensitivity.
-threshold = noise_floor * 8
+threshold = noise_floor + 3*np.std(envelope)
 
 # Step 5: Find peaks (claps)
 # distance prevents multiple detections from the same clap tail.
